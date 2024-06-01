@@ -30,6 +30,7 @@ git clone https://github.com/bbrito/gym-collision-avoidance.git
 ```
 Download nvidia-tensorflow from https://developer.download.nvidia.com/compute/redist/nvidia-tensorflow/, and 
    ensure that the python version is 3.8.16:
+```
  pip install nvidia_tensorflow-1.15.4+nv20.12-cp38-cp38-linux_x86_64.whl
  pip install mujoco_py==2.1.2.14
  pip install gym==0.22.0
