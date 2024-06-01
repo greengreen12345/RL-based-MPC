@@ -112,7 +112,7 @@ def main():
 
 
 
-    assert os.path.isdir(log_path), "The {} folder was not found".format(log_path)
+    #assert os.path.isdir(log_path), "The {} folder was not found".format(log_path)
 
     #model_path = find_saved_model(algo, log_path, env_id, load_best=args.load_best)
 
@@ -150,20 +150,12 @@ def main():
 
     env = DummyVecEnv([lambda: env])
 
-    #model_path = "/home/my/go-mpc/logs/ppo2-mpc/PointNMaze-v0_241/PointNMaze-v0.zip"
-    #model_path = "/home/my/go-mpc/logs/ppo2-mpc/PointNMaze-v0_241/rl_model_600000_steps.zip"
-    #model_path = "/home/my/go-mpc/logs/ppo2-mpc/PointNMaze-v0_243/rl_model_851056_steps.zip"
-    # model_path = "/home/my/go-mpc/logs/ppo2-mpc/PointNMaze-v0_244/rl_model_751056_steps.zip"
-    #model_path = "/home/my/go-mpc/logs/ppo2-mpc/PointNMaze-v0_244/rl_model_600000_steps.zip"
+
     #model_path = "/home/my/go-mpc/logs/ppo2-mpc/PointNMaze-v0_246/rl_model_600000_steps.zip"
     model_path = "/home/my/RL-based-MPC/logs/ppo2-mpc/PointNMaze-v0_248/rl_model_2183616_steps.zip"
 
     model = ALGOS[algo].load(model_path)
-    #model = ALGOS[algo].load(model_path)
-    #print(env.observation_space)
-    #print(model.observation_space)
     obs = env.reset()
-
 
     # Force deterministic for DQN, DDPG, SAC and HER (that is a wrapper around)
     deterministic = args.deterministic or algo in ['dqn', 'ddpg', 'sac', 'her', 'td3'] and not args.stochastic
@@ -185,75 +177,41 @@ def main():
 
     while True:
         actions = []
-        # agents = env.unwrapped.envs[0].env.agents
-        # ego_agent = agents[0]
-        # number_of_agents = len(one_env.agents)-1
-        # agents[0].policy.x_error_weight_ = 1.0
-        # agents[0].policy.y_error_weight_ = 1.0
-        # agents[0].policy.cost_function_weight = 0.0
-        # agents[0].policy.policy_network = model
-        # agents[0].policy.reset_network()
-        # agents[0].policy.enable_collision_avoidance = args.coll_avd
         episode_step = 0
         state = None
         n_infeasible= 0
         episode_nn_processing_times = []
-        episode_mpc_processing_times = []
+
 
         x0 = obs['observation'][:3].T
         x0 = x0[:3, 0]
         obs = obs['observation'][:3].T
 
 
-        # obs[:3, 0] =  [  3.871812, 12.060381,  0]
-        # action, state = model.predict(obs[:3, 0], state=state, deterministic=deterministic,
-        #                               seq_length=np.ones(1) * (1 * 9))
-        # print("actionn", action)
-        j = 0
+
+
         while True:
 
-            #mpc = MPCController()
+
             mpc = MPCSL2()
             action, state = model.predict(obs[:3, 0], state=state, deterministic=deterministic,
                                           seq_length=np.ones(1) * (1 * 9))
-            #print("observation", obs[:3, 0])
-            #print("action", action)
 
-            # if j == 0:
-            #     action = np.array([[6, 0]])
-                #action = np.array([[2,1]])
-                #j += 1
-            # #action = np.array([[8, 0]])
             print("action", action)
-            # #print("observation", obs[:3, 0])
+
             goal_state1 = np.append(action, [[0]], axis=1)
             goal_state1 = goal_state1[0]
             env.unwrapped.envs[0].env.set_goal(goal_state1)
             #env.unwrapped.envs[0].env.set_goal(action)
 
             for i in range(60):
-            #while True:
+
                 start = time.time()
-
-                #print("obs.shape", obs.shape)
-                #print(obs[:3, 0].shape)
-
-                #action, state = model.predict(obs[:3, 0], state=state, deterministic=deterministic,seq_length = np.ones(1) * (1 * 9))
-
-                #print("obs['observation']", obs['observation'])
-                #print("obs", obs)
-                #print("observation", obs[:3, 0])
-                #print("action", action)
                 end = time.time()
                 episode_nn_processing_times.append(end - start)
                 actions.append(action)
-                #print("observation", obs[:3, 0])
-                #print(action)
-                # Send some info for collision avoidance env visualization (need a better way to do this)
-                # one_env.set_perturbed_info({'perturbed_obs': perturbed_obs[0], 'perturber': perturber})
 
                 # Update the rendering of the environment (optional)
-
                 env.render()
 
                 if x0[1]>6 and x0[1]<16:
@@ -261,39 +219,21 @@ def main():
                 else:
                     goal_state = np.append(action, [[0]], axis=1)
 
-                # goal_state = np.array([0., 0., 0.])
-
                 # goal_state = np.append(action, [[0]], axis=1)
                 # goal_state = goal_state[0]
-                #print("goal_state", goal_state)
-                # print("x0", x0)
 
-                #env.unwrapped.envs[0].env.set_goal(goal_state)
-
-
-
-                #optimal_U_opti = mpc.get_optimal_control(x0, goal_state)
                 optimal_U_opti = mpc.mpc_output(x0, goal_state)
 
 
                 # Take a step in the environment, record reward/steps for logging
-               # ego_agent.policy.network_output_to_action(0, agents, action[0])
                 next_state, rewards, done, which_agents_done = env.unwrapped.envs[0].env.step(optimal_U_opti[:, 0])
 
                 x0 = next_state['observation'][:3].T
-                # print("next_state['observation']", next_state['observation'])
                 obs = next_state['observation'].reshape(-1, 1)
 
-
-                #episode_mpc_processing_times.append(agents[0].policy.solve_time)
-
-                #n_infeasible += agents[0].is_infeasible
                 total_reward += rewards
                 step += 1
                 episode_step += 1
-
-                # if np.linalg.norm(x0[:2] - action) < 2.5:
-                #     break
 
         # After end of episode, store some statistics about the environment
         # Some stats apply to every gym env...

@@ -18,28 +18,22 @@ class MPCSL:
     def __init__(self, goal_states):
         self.config = Configuration()
         self.goal_states = goal_states
-        self.goal_state = goal_states[2]  # 初始化目标状态
-        #self.ca_optimizer = None  # 将在第一次调用 mpc_output 时初始化
+        self.goal_state = goal_states[2]  # Initialize the goal state
+
 
     def mpc_output(self, x0):
-        # 更新目标状态基于当前位置和目标状态之间的距离
+        # Update goal based on the distance between the current position and the goal
         if np.all(self.goal_state == self.goal_states[2]) and np.linalg.norm(x0[:2] - self.goal_states[0][:2]) < 1.5:
             self.goal_state = self.goal_states[1]
         if np.all(self.goal_state == self.goal_states[1]) and np.linalg.norm(x0[:2] - self.goal_states[1][:2]) < 1.5:
             self.goal_state = self.goal_states[2]
 
-        # 初始化 CasadiOptimizer，如果它还没有被初始化
-        #print(self.goal_state)
+        # Initialize CasadiOptimizer
         ca_optimizer = CasadiOptimizer(configuration=self.config, init_values=x0, predict_horizon=3, goal_state=self.goal_state)
-        # ca_optimizer = CasadiOptimizer(configuration=self.config, init_values=x0, predict_horizon=2,
-        #                                goal_state=self.goal_state)
 
-        # 解决 MPC 问题
+        # Solve the MPC
         optimal_U_opti, x17, xm = ca_optimizer.optimize()
 
-        #print("xm",xm)
-
-        #return optimal_U_opti, xm[:, -1] - xm[:, 0]
         return optimal_U_opti, xm[:, -1]
 
 # controller = MPCSL(goal_states)

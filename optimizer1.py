@@ -66,13 +66,6 @@ class CasadiOptimizer(object):
         for _ in range(self.predict_horizon):
             lbg.extend([0.0, 0.0, 0.0])  #  x, y, Psi for each time step
             ubg.extend([0.0, 0.0, 0.0])
-            # lbg.append(0.0)
-            # lbg.append(0.0)
-            # lbg.append(0.0)
-            #
-            # ubg.append(0.0)
-            # ubg.append(0.0)
-            # ubg.append(0.0)
 
         # 9 comparisons between centers
         # for _ in range(self.predict_horizon + 1):
@@ -187,11 +180,6 @@ class CasadiOptimizer(object):
         # parameters for ipopt solver
         opts_setting = {'ipopt.max_iter': 100, 'ipopt.print_level': 0, 'print_time': 0, 'ipopt.acceptable_tol': 1e-8,
                         'ipopt.acceptable_obj_change_tol': 1e-6, }
-        # opts_setting = {'ipopt.max_iter': 10000, 'ipopt.print_level': 0, 'print_time': 0, 'ipopt.acceptable_tol': 1e-11,
-        #                 'ipopt.acceptable_obj_change_tol': 1e-11, }
-
-        # opts_setting = {'ipopt.max_iter': 10000, 'ipopt.print_level': 0, 'print_time': 0, 'ipopt.acceptable_tol': 1e-11,
-        #                 'ipopt.acceptable_obj_change_tol': 1e-11, }
 
         # NLP solver created with ipopt plugin
         solver = ca.nlpsol('solver', 'ipopt', nlp_prob, opts_setting)

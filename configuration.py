@@ -122,14 +122,8 @@ def divide_boundary_into_points(vertices, num_points):
 
     return all_points
 
-vertices_left = np.array([[-2, 2], [6, 2], [6, 6], [-2, 6], [-2,18], [10, 18]])
-vertices_right = np.array([[-2, -2], [10, -2], [10, 10], [2, 10], [2, 14], [10, 14]])
-
-
-
-
-
-
+vertices_left = np.array([[-2, 2], [6, 2], [6, 6], [-2, 6], [-2,18], [10, 18]]) #Definition of left lane
+vertices_right = np.array([[-2, -2], [10, -2], [10, 10], [2, 10], [2, 14], [10, 14]]) #Definition of right lane
 
 class Configuration:
     def __init__(self):

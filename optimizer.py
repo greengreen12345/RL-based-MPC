@@ -36,8 +36,7 @@ class CasadiOptimizer(object):
                                                find_closest_distance_with_road_boundary(self.configuration.left_road_boundary, ego_circles_centers_tuple[1])]
             closest_distance_right_boundary = [find_closest_distance_with_road_boundary(self.configuration.right_road_boundary, ego_circles_centers_tuple[0]),
                                                 find_closest_distance_with_road_boundary(self.configuration.right_road_boundary, ego_circles_centers_tuple[1])]
-            #print(closest_distance_left_boundary)
-            #print(closest_distance_right_boundary)
+
             # 6 constraints for road bound
             g.append(closest_distance_left_boundary[0])
             g.append(closest_distance_left_boundary[1])
@@ -66,58 +65,15 @@ class CasadiOptimizer(object):
         for _ in range(self.predict_horizon):
             lbg.extend([0.0, 0.0, 0.0])  #  x, y, Psi for each time step
             ubg.extend([0.0, 0.0, 0.0])
-            # lbg.append(0.0)
-            # lbg.append(0.0)
-            # lbg.append(0.0)
-            #
-            # ubg.append(0.0)
-            # ubg.append(0.0)
-            # ubg.append(0.0)
+
 
         # 9 comparisons between centers
         for _ in range(self.predict_horizon + 1):
 
-
-            # lbg.append(self.radius_ego)
-            # lbg.append(self.radius_ego)
-            # lbg.append(self.radius_ego)
-            # lbg.append(self.radius_ego)
-            # lbg.append(self.radius_ego)
-            # lbg.append(self.radius_ego)
-
-            # #lbg.append(1.4)
-            # lbg.append(1.0)
-            # lbg.append(1.4)
-            # #lbg.append(0.5)
-            # lbg.append(1.0)
-            # lbg.append(1.4)
-            # #lbg.append(0.5)
-
-            # lbg.append(0.5)
-            # lbg.append(0.5)
-            # lbg.append(0.5)
-            # lbg.append(0.5)
-
-            # lbg.append(0.9)
-            # lbg.append(0.9)
-            # lbg.append(0.9)
-            # lbg.append(0.9)
-
-            # lbg.append(0.1)
-            # lbg.append(0.1)
-            # lbg.append(0.1)
-            # lbg.append(0.1)
-
-            # lbg.append(0.4)
-            # lbg.append(0.4)
-            # lbg.append(0.4)
-            # lbg.append(0.4)
-
             lbg.append(0.7)
             lbg.append(0.7)
             lbg.append(0.7)
             lbg.append(0.7)
-
 
             ubg.append(np.inf)
             ubg.append(np.inf)

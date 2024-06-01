@@ -443,9 +443,6 @@ class PPO2MPC(ActorCriticRLModel):
 
     def learn(self, total_timesteps, callback=None, log_interval=1, tb_log_name="PPO2",
               reset_num_timesteps=True):
-        #total_timesteps = 365000
-        #total_timesteps = 120000
-        # print("total_timesteps", total_timesteps)
 
         # Transform to callable if needed
         self.learning_rate = get_schedule_fn(self.learning_rate)
@@ -714,10 +711,6 @@ class Runner(AbstractEnvRunner):
         observation = self.env.reset()
         x0 = observation['observation'][0][:3].T
 
-        #self.t = 0
-
-
-        #mpc = MPCController()
         mpc = MPCSL2()
         dones = 0
 
@@ -731,29 +724,18 @@ class Runner(AbstractEnvRunner):
             # Used in case we want to consider a variable number of agents
             # n_other_agents = len(self.env.unwrapped.envs[0].env.agents)-1
             # mb_n_other_agents.append(n_other_agents)
-            #self.t += 1
-            #reward = 0
-            mb_states.append(self.states)
 
-            #actions, values, self.states, neglogpacs = self.model.step(self.obs, self.states, self.dones,deterministic=False,seq_length=np.ones([self.obs.shape[0]])*(n_other_agents*9))
+            mb_states.append(self.states)
             actions, values, self.states, neglogpacs = self.model.step(self.obs[:, :3], self.states, self.dones,
                                                                  deterministic=False,
                                                                  seq_length=np.ones(1) * (1 * 9))
-            #print("actions", actions)
             mb_mpc_actions.append(0.0)
             # collect data
-
-            #mb_obs.append(self.obs.copy())
             mb_obs.append(self.obs[:, :3].copy())
             mb_actions.append(actions)
-
             mb_values.append(values)
             mb_neglogpacs.append(neglogpacs)
             mb_dones.append(self.dones)
-            # clipped_actions = actions
-            # # Clip the actions to avoid out of bound error
-            # if isinstance(self.env.action_space, gym.spaces.Box):
-            #     clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
 
             # Repeat MPC Step for stability
             #ego_agent.policy.network_output_to_action(0, agents, clipped_actions[0])
@@ -763,62 +745,32 @@ class Runner(AbstractEnvRunner):
                 goal_state = np.append(actions, [[0]], axis=1)
             goal_state = goal_state[0]
 
-            # action = np.append(actions, [[0]], axis=1)
-            # goal_state = action[0]
-
-            # print("observation", self.obs[:, :3])
-            # print("goal_state", goal_state)
-            # print("x0", x0)
-
             for j in range(60):
 
-
-                #optimal_U_opti = mpc.get_optimal_control(x0, goal_state)
                 optimal_U_opti = mpc.mpc_output(x0, goal_state)
 
                 self.obs, rewards, self.dones, infos = self.env.unwrapped.envs[0].env.step(optimal_U_opti[:, 0])
 
                 x0 = self.obs['observation'][:3].T
 
-                #reward += rewards
-
                 if np.linalg.norm(x0[:2] - goal_state[:2]) < 0.8:
                     break
 
-
-            #mb_rewards.append(reward)
             mb_rewards.append(rewards)
 
             self.obs = self.obs['observation'].reshape(1, -1)
             self.dones = np.array([self.dones])
-
-
             self.model.num_timesteps += self.n_envs
-
-            # if ego_agent.in_collision:
-            #     n_collisions +=1
-            # n_infeasible_sols += ego_agent.is_infeasible
-            # n_reach_goal += ego_agent.is_at_goal
-            # n_timeouts += ego_agent.ran_out_of_time
 
             if dones:
                 next_obs = self.env.unwrapped.envs[0].env.reset()
                 x0 = next_obs['observation'][:3].T
                 self.states *= 0.0
-                #break
 
-
-
-            #if np.linalg.norm(x0[:2] - np.array([8.0, 16.0])) < 0.8 or i >= 2000:
             if np.linalg.norm(x0[:2] - np.array([8.0, 16.0])) < 0.8 or i == self.n_steps-2:
 
                 self.dones = np.array([1])
-                #self.dones = True
                 dones = np.array([1])
-
-
-            # if self.dones[0]:
-            #     self.states *= 0.0
 
             if self.callback is not None:
                 # Abort training early
@@ -859,8 +811,6 @@ class Runner(AbstractEnvRunner):
             delta = mb_rewards[step] + self.gamma * nextvalues * nextnonterminal - mb_values[step]
             mb_advs[step] = last_gae_lam = delta + self.gamma * self.lam * nextnonterminal * last_gae_lam
         mb_returns = mb_advs + mb_values
-
-
         mb_obs = np.atleast_2d(mb_obs)
         mb_returns = np.atleast_2d(mb_returns)
         mb_dones = np.atleast_2d(mb_dones[:self.n_steps])
@@ -919,12 +869,10 @@ class MPCRunner(AbstractEnvRunner):
             np.array([0., 16., np.pi / 2]),
             np.array([8., 16., 0])
         ]
-        #goal_state = self.goal_states[2]
 
         controller = MPCSL(goal_states)
         observation = self.env.reset()
         x0 = observation['observation'][0][:3].T
-
 
         while step_it < self.n_steps:
 
@@ -939,45 +887,14 @@ class MPCRunner(AbstractEnvRunner):
             # mb_n_other_agents.append(n_other_agents)
             mb_states.append(self.states)
 
-            #controller = MPCSL(self.goal_states)
-            # observation = self.env.reset()
-            # x0 = observation['observation'][0][:3].T
-
-            #print(observation['observation'])
-            #print("x0", x0)
-
-
             optimal_U_opti, actions = controller.mpc_output(x0)
             actions = np.expand_dims(actions, axis=0)
             actions = actions[:, :2]
-
-            #print("actions", actions)
-            # TODO: Fix Assumes that agent 0 is the one learning
-            #actions, exit_flag = self.env.unwrapped.envs[0].env.agents[0].policy.mpc_output(0, agents)
-            #actions = np.expand_dims(actions,axis=0)
-            #_, values, self.states, neglogpacs = self.model.step(self.obs, self.states, self.dones)
-
-            # print(type(self.obs))
-            #print(self.obs)
-            #print(self.dones)
-            #print(self.obs.shape[0])
 
             #_, values, self.states, neglogpacs = self.model.step(self.obs[:, :3], self.states, self.dones, deterministic=False, seq_length=np.ones([self.obs.shape[0]])*(1*8))
             _, values, self.states, neglogpacs = self.model.step(self.obs[:, :3], self.states, self.dones,
                                                                  deterministic=False,
                                                                  seq_length=np.ones(1) * (1 * 9))
-            #seq_length_array = np.ones([self.obs.shape[0]]) * (1 * 9)
-            #print("Shape of seq_length_array:", seq_length_array.shape)
-            #seq_length = np.full((2048,), 9)
-            # seq_length = np.full((2048,), 9)
-            #
-            # #seq_length = np.array([9])
-            # _, values, self.states, neglogpacs = self.model.step(self.obs[:, :3], self.states, self.dones,
-            #                                                      deterministic=False,
-            #                                                      seq_length=None)
-            #print("Shape of seq_length_array:", seq_length.shape)
-            #self.env.render()
-
 
             mb_mpc_actions.append(1)
             #mb_obs.append(self.obs.copy())
@@ -985,23 +902,13 @@ class MPCRunner(AbstractEnvRunner):
             mb_actions.append(actions)
             mb_values.append(values)
             mb_dones.append(self.dones)
-            # clipped_actions = actions
-            # # Clip the actions to avoid out of bound error
-            # if isinstance(self.env.action_space, gym.spaces.Box):
-            #     clipped_actions = np.clip(actions, self.env.action_space.low, self.env.action_space.high)
 
-            # Repeat Step for stability
-            #ego_agent.policy.network_output_to_action(0, agents, clipped_actions[0])
-            #self.obs[:], rewards, self.dones, infos = self.env.step(clipped_actions)
-            # TODO: To be fixed 2
             # Apply control input to the environment
-            #self.obs, rewards, self.dones, infos = self.env.step(optimal_U_opti[:, 0])
             self.obs, rewards, self.dones, infos = self.env.unwrapped.envs[0].env.step(optimal_U_opti[:, 0])
 
             x0 = self.obs['observation'][:3].T
             self.obs = self.obs['observation'].reshape(1, -1)
             self.dones = np.array([self.dones])
-
 
             if x0[1]>13 and np.linalg.norm(x0[:2] - goal_states[2][:2]) < 0.7:
 
@@ -1009,29 +916,11 @@ class MPCRunner(AbstractEnvRunner):
                 x0 = next_obs['observation'][:3].T
                 self.states *= 0.0
 
-                #print("Next obs", next_obs)
-                #break
-            # if agents[0].in_collision:
-            #     n_collisions += 1
-            #     step_it -= agents[0].step_num
-            #     mb_rewards = mb_rewards[:step_it]
-            #     mb_obs = mb_obs[:step_it]
-            #     mb_actions = mb_actions[:step_it]
-            #     mb_dones = mb_dones[:step_it]
-            #     self.model.num_timesteps -= agents[0].step_num
-            #     mb_states = mb_states[:step_it]
-            #     mb_n_other_agents = mb_n_other_agents[:step_it]
-            # else:
             mb_rewards.append(rewards)
             step_it += 1
             # n_infeasible_sols += agents[0].is_infeasible
             # n_reach_goal += agents[0].is_at_goal
             # n_timeouts += agents[0].ran_out_of_time
-            self.model.num_timesteps += self.n_envs
-
-            # if self.dones:
-            #     self.states *= 0.0
-
             self.model.num_timesteps += self.n_envs
 
             if self.callback is not None:
@@ -1059,7 +948,6 @@ class MPCRunner(AbstractEnvRunner):
         last_values = self.model.value(self.obs[:, :3], self.states, self.dones,
                                                              seq_length=np.ones([self.obs.shape[0]]) * (1 * 9))
 
-
         # discount/bootstrap off value fn
         mb_advs = np.zeros_like(mb_rewards)
         true_reward = np.copy(mb_rewards)
@@ -1076,10 +964,7 @@ class MPCRunner(AbstractEnvRunner):
             delta = mb_rewards[step] + self.gamma * nextvalues * nextnonterminal - mb_values[step]
             mb_advs[step] = last_gae_lam = delta + self.gamma * self.lam * nextnonterminal * last_gae_lam
         mb_neglogpacs = np.zeros([self.n_steps,1])
-
         mb_returns = np.zeros([self.n_steps,1])
-
-
         mb_obs = np.atleast_2d(mb_obs)
         mb_returns = np.atleast_2d(mb_returns)
         mb_dones = np.atleast_2d(mb_dones[:self.n_steps])
@@ -1090,8 +975,6 @@ class MPCRunner(AbstractEnvRunner):
 
         mb_obs, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs, true_reward = \
             map(swap_and_flatten, (mb_obs, mb_returns, mb_dones[:self.n_steps], mb_actions, mb_values, mb_neglogpacs, true_reward))
-
-
 
         return mb_obs, mb_returns, mb_dones, mb_actions, mb_values, mb_neglogpacs, np.squeeze(mb_states), ep_infos, true_reward, n_collisions,n_infeasible_sols,n_timeouts,n_reach_goal, mb_mpc_actions, mb_n_other_agents
 

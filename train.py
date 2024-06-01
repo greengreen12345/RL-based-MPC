@@ -251,154 +251,21 @@ if __name__ == '__main__':
     Config.SHOW_EPISODE_PLOTS = False
     Config.TRAIN_MODE = True
     Config.SAVE_EPISODE_PLOTS = True
-    #env, one_env = create_env()
-    #env = gym.make('PointNMaze-v0')
-
 
     from gym.wrappers.time_limit import TimeLimit
     import mujoco_maze
 
-    # observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(6,))  # n 是观测空间的维度
-    # env = TimeLimit(gym.make('PointNMaze-v0', observation_space=observation_space), max_episode_steps=5000)
-
     env = TimeLimit(gym.make('PointNMaze-v0'), max_episode_steps=5000)
     eval_env = TimeLimit(gym.make('PointNMaze-v0'), max_episode_steps=5000)
-
-
-
-    # from mpc_rl_collision_avoidance.external.stable_baselines.her.utils import HERGoalEnvWrapper
-    # env = HERGoalEnvWrapper(env)
-    # eval_env = HERGoalEnvWrapper(eval_env)
-
-
-    #print(env.observation_space.sample())
-    #env = VecNormalize(env)
-    #print(env.observation_space.sample())
-    #agents = tc.go_to_goal
-    #agents = tc.train_agents_swap_circle
-    #one_env.set_agents(agents)
-    #init_obs = env.reset()
-
-    # Create test env if needed, do not normalize reward
-    # eval_env = None
-    # if args.eval_freq > 0:
-    #     # Account for the number of parallel environments
-    #     args.eval_freq = max(args.eval_freq // n_envs, 1)
-    #
-    #     # Do not normalize the rewards of the eval env
-    #     old_kwargs = None
-    #     if normalize:
-    #         if len(normalize_kwargs) > 0:
-    #             old_kwargs = normalize_kwargs.copy()
-    #             normalize_kwargs['norm_reward'] = False
-    #         else:
-    #             normalize_kwargs = {'norm_reward': False}
-    #
-    #     if args.verbose > 0:
-    #         print("Creating test environment")
-    #
-    #     save_vec_normalize = SaveVecNormalizeCallback(save_freq=1, save_path=params_path)
-    #     eval_callback = EvalCallback(create_env(1, eval_env=True), callback_on_new_best=save_vec_normalize,
-    #                                  best_model_save_path=save_path, n_eval_episodes=args.eval_episodes,
-    #                                  log_path=save_path, eval_freq=args.eval_freq)
-    #     callbacks.append(eval_callback)
-    #
-    #     # Restore original kwargs
-    #     if old_kwargs is not None:
-    #         normalize_kwargs = old_kwargs.copy()
-
 
     # Stop env processes to free memory
     if args.optimize_hyperparameters and n_envs > 1:
         env.close()
 
-    # Parse noise string for DDPG and SAC
-    # if algo_ in ['ddpg', 'sac','sac-mpc', 'td3'] and hyperparams.get('noise_type') is not None:
-    #     noise_type = hyperparams['noise_type'].strip()
-    #     noise_std = hyperparams['noise_std']
-    #     n_actions = env.action_space.shape[0]
-    #     if 'adaptive-param' in noise_type:
-    #         assert algo_ == 'ddpg', 'Parameter is not supported by SAC'
-    #         hyperparams['param_noise'] = AdaptiveParamNoiseSpec(initial_stddev=noise_std,
-    #                                                             desired_action_stddev=noise_std)
-    #     elif 'normal' in noise_type:
-    #         if 'lin' in noise_type:
-    #             hyperparams['action_noise'] = LinearNormalActionNoise(mean=np.zeros(n_actions),
-    #                                                                   sigma=noise_std * np.ones(n_actions),
-    #                                                                   final_sigma=hyperparams.get('noise_std_final', 0.0) * np.ones(n_actions),
-    #                                                                   max_steps=n_timesteps)
-    #         else:
-    #             hyperparams['action_noise'] = NormalActionNoise(mean=np.zeros(n_actions),
-    #                                                             sigma=noise_std * np.ones(n_actions))
-    #     elif 'ornstein-uhlenbeck' in noise_type:
-    #         hyperparams['action_noise'] = OrnsteinUhlenbeckActionNoise(mean=np.zeros(n_actions),
-    #                                                                    sigma=noise_std * np.ones(n_actions))
-    #     else:
-    #         raise RuntimeError('Unknown noise type "{}"'.format(noise_type))
-    #     print("Applying {} noise with std {}".format(noise_type, noise_std))
-    #     del hyperparams['noise_type']
-    #     del hyperparams['noise_std']
-    #     if 'noise_std_final' in hyperparams:
-    #         del hyperparams['noise_std_final']
-
     if ALGOS[args.algo] is None:
         raise ValueError('{} requires MPI to be installed'.format(args.algo))
 
-    # if os.path.isfile(args.trained_agent):
-    #     # Continue training
-    #     print("Loading pretrained agent")
-    #     # Policy should not be changed
-    #     del hyperparams['policy']
-    #
-    #     model = ALGOS[args.algo].load(args.trained_agent, env=env,
-    #                                   tensorboard_log=tensorboard_log, verbose=args.verbose, **hyperparams)
-    #
-    #     exp_folder = args.trained_agent[:-4]
-    #     if normalize:
-    #         print("Loading saved running average")
-    #         stats_path = os.path.join(exp_folder, env_id)
-    #         if os.path.exists(os.path.join(stats_path, 'vecnormalize.pkl')):
-    #             env = VecNormalize.load(os.path.join(stats_path, 'vecnormalize.pkl'), env)
-    #         else:
-    #             # Legacy:
-    #             env.load_running_average(exp_folder)
-    #
-    # elif args.optimize_hyperparameters:
-    #
-    #     if args.verbose > 0:
-    #         print("Optimizing hyperparameters")
-    #
-    #
-    #     def create_model(*_args, **kwargs):
-    #         """
-    #         Helper to create a model with different hyperparameters
-    #         """
-    #         return ALGOS[args.algo](env=env, tensorboard_log=tensorboard_log,
-    #                                 verbose=0, **kwargs)
-    #
-    #
-    #     data_frame = hyperparam_optimization(args.algo, create_model, create_env, n_trials=args.n_trials,
-    #                                          n_timesteps=n_timesteps, hyperparams=hyperparams,
-    #                                          n_jobs=args.n_jobs, seed=args.seed,
-    #                                          sampler_method=args.sampler, pruner_method=args.pruner,
-    #                                          verbose=args.verbose)
-    #
-    #     report_name = "report_{}_{}-trials-{}-{}-{}_{}.csv".format(env_id, args.n_trials, n_timesteps,
-    #                                                             args.sampler, args.pruner, int(time.time()))
-    #
-    #     log_path = os.path.join(args.log_folder, args.algo, report_name)
-    #
-    #     if args.verbose:
-    #         print("Writing report to {}".format(log_path))
-    #
-    #     os.makedirs(os.path.dirname(log_path), exist_ok=True)
-    #     data_frame.to_csv(log_path)
-    #     exit()
-    # else:
-    # Train an agent from scratch
-
     model = ALGOS[args.algo](env=env, tensorboard_log=args.tensorboard_log, verbose=args.verbose, **hyperparams)
-
 
     kwargs = {}
     if args.log_interval > -1:
@@ -411,57 +278,6 @@ if __name__ == '__main__':
     with open(os.path.join(params_path, 'config.yml'), 'w') as f:
         yaml.dump(saved_hyperparams, f)
 
-
-    # Save Configuration Parameters
-    # with open(os.path.join(params_path, 'simulation_config.yml'), 'w') as f:
-    #     var = {
-    #     "MODEL_DESCRIPTION": " diff dt with new scenarios",
-    #
-    #     "LSTM_HIDDEN_SIZE": Config.LSTM_HIDDEN_SIZE,
-    #     "NUM_LAYERS":Config.NUM_LAYERS,
-    #     "NUM_HIDDEN_UNITS":Config.NUM_HIDDEN_UNITS,
-    #     "NETWORK":Config.NETWORK,
-    #     "GAMMA":Config.GAMMA,
-    #     "LEARNING_RATE":Config.LEARNING_RATE,
-    #     "NUM_TEST_CASES":Config.NUM_TEST_CASES,
-    #     "PLOT_EVERY_N_EPISODES":Config.PLOT_EVERY_N_EPISODES,
-    #     "DT":Config.DT,
-    #     "REWARD_AT_GOAL":Config.REWARD_AT_GOAL,
-    #     "REWARD_COLLISION_WITH_AGENT":Config.REWARD_COLLISION_WITH_AGENT,
-    #     "REWARD_INFEASIBLE": Config.REWARD_INFEASIBLE,
-    #     "REWARD_COLLISION_WITH_WALL":Config.REWARD_COLLISION_WITH_WALL ,
-    #     "REWARD_GETTING_CLOSE":Config.REWARD_GETTING_CLOSE,
-    #     "REWARD_ENTERED_NORM_ZONE":Config.REWARD_ENTERED_NORM_ZONE,
-    #     "REWARD_TIME_STEP":Config.REWARD_TIME_STEP,
-    #     "REWARD_DISTANCE_TO_GOAL":Config.REWARD_DISTANCE_TO_GOAL,
-    #     "REWARD_WIGGLY_BEHAVIOR":Config.REWARD_WIGGLY_BEHAVIOR,
-    #     "WIGGLY_BEHAVIOR_THRESHOLD":Config.WIGGLY_BEHAVIOR_THRESHOLD,
-    #     "COLLISION_DIST":Config.COLLISION_DIST,
-    #     "GETTING_CLOSE_RANGE":Config.GETTING_CLOSE_RANGE,
-    #     "CURRICULUM_LEARNING": Config.CURRICULUM_LEARNING ,
-    #     "JOINT_MPC_RL_TRAINING": Config.JOINT_MPC_RL_TRAINING,
-    #     "LASERSCAN_LENGTH":Config.LASERSCAN_LENGTH,
-    #     "NUM_STEPS_IN_OBS_HISTORY":Config.NUM_STEPS_IN_OBS_HISTORY,
-    #     "NUM_PAST_ACTIONS_IN_STATE":Config.NUM_PAST_ACTIONS_IN_STATE ,
-    #
-    #     "NEAR_GOAL_THRESHOLD":Config.NEAR_GOAL_THRESHOLD,
-    #     "MAX_TIME_RATIO":Config.MAX_TIME_RATIO,
-    #
-    #     "SENSING_HORIZON":Config.SENSING_HORIZON,
-    #
-    #     "RVO_TIME_HORIZON":Config.RVO_TIME_HORIZON,
-    #     "RVO_COLLAB_COEFF":Config.RVO_COLLAB_COEFF,
-    #     "RVO_ANTI_COLLAB_T":Config.RVO_ANTI_COLLAB_T,
-    #
-    #     "MAX_NUM_AGENTS_IN_ENVIRONMENT":Config.MAX_NUM_AGENTS_IN_ENVIRONMENT,
-    #     "MAX_NUM_OTHER_AGENTS_IN_ENVIRONMENT":Config.MAX_NUM_OTHER_AGENTS_IN_ENVIRONMENT,
-    #     "MAX_NUM_OTHER_AGENTS_OBSERVED":Config.MAX_NUM_OTHER_AGENTS_OBSERVED,
-    #     "scenario": env.unwrapped.envs[0].scenario
-    #     }
-    #     yaml.dump(var, f)
-    #
-    # print("Log path: {}".format(save_path))
-
     # Save plot trajectories
     plot_save_dir = save_path + '/figs/'
     os.makedirs(plot_save_dir, exist_ok=True)
@@ -472,7 +288,6 @@ if __name__ == '__main__':
         model.learn(n_timesteps, **kwargs)
     except KeyboardInterrupt:
         pass
-
 
     # Only save worker of rank 0 when using mpi
     if rank == 0:
