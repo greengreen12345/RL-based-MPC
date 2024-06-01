@@ -34,6 +34,7 @@ Download nvidia-tensorflow from https://developer.download.nvidia.com/compute/re
 pip install nvidia_tensorflow-1.15.4+nv20.12-cp38-cp38-linux_x86_64.whl
 pip install mujoco_py==2.1.2.14
 pip install gym==0.22.0
+pip install Cython==3.0.0a10
 ```
 3. Start training:
 ```
