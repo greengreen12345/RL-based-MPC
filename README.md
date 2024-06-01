@@ -57,5 +57,6 @@ python test.py
 
 4. To view the logs of one of the training models, such as "PointNMaze-v0_248", run:
 ```
-<RL-based-MPC directoy>/logs/ppo2-mpc/PointNMaze-v0_248/tf_log
+tensorboard --logdir=<RL-based-MPC directoy>/logs/ppo2-mpc/PointNMaze-v0_248/tf_log
 ```
+ 
