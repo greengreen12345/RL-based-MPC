@@ -36,20 +36,26 @@ pip install mujoco_py==2.1.2.14
 pip install gym==0.22.0
 pip install Cython==3.0.0a10
 ```
-3. Start training:
+## Run:
+0. Start training:
 ```
 python train.py
 ```
-4. To test the trained network do:
+1. To test the trained network do:
 ```
 python test.py
 ```
-5. The trained models are located in：
+2. The main PPO2MPC training algorithm is defined in:
+```
+<RL-based-MPC directoy>/mpc_rl_collision_avoidance/algorithms/ppo2/ppo2mpc.py
+```
+
+3. The trained models are located in：
 ```
 <RL-based-MPC directoy>/logs/ppo2-mpc
 ```
 
-6. To view the logs of one of the training models, such as "PointNMaze-v0_248", run:
+4. To view the logs of one of the training models, such as "PointNMaze-v0_248", run:
 ```
 <RL-based-MPC directoy>/logs/ppo2-mpc/PointNMaze-v0_248/tf_log
 ```
