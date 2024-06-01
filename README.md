@@ -18,10 +18,10 @@ git clone https://github.com/greengreen12345/RL-based-MPC.git
 ```
 2. Environment setup:
 ```
- source <setup directory>/venv/bin/activate
- cd <RL-based-MPC directoy>
+source <setup directory>/venv/bin/activate
+cd <RL-based-MPC directoy>
 ```
-Download "gym_collision_avoidance" package from
+   Download "gym_collision_avoidance" package from
 ```
 git clone https://github.com/bbrito/gym-collision-avoidance.git
 ```
