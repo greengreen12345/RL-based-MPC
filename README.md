@@ -20,6 +20,12 @@ git clone https://github.com/greengreen12345/RL-based-MPC.git
 ```
  source <setup directory>/venv/bin/activate
  cd <RL-based-MPC directoy>
+```
+Download "gym_collision_avoidance" package from
+```
+git clone https://github.com/bbrito/gym-collision-avoidance.git
+```
+```
  python setup.py install
  pip install nvidia_tensorflow-1.15.4+nv20.12-cp38-cp38-linux_x86_64.whl(Please 
    ensure that the python version is 3.8.16, download from https://developer.download.nvidia.com/compute/redist/nvidia-tensorflow/)
